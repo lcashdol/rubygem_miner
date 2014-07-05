@@ -5,7 +5,7 @@ This script  will look for basic vulnerabilities in ruby gems, it scrapes rubyge
 
 So $> ./vuln_scrape.sh A
 
-Will download all ruby gems that start with the letter A, and look for simple vulnerabilities.  Their are false positives
+Will download all ruby gems that start with the letter A, and look for simple vulnerabilities.  There are false positives
 but in a sea of code, you'll get a lake of possible vulnerabilities to look at.
 
 Also their is much room for improvement, this should really be re-written to use the rubygems.org API.
