@@ -1,16 +1,17 @@
 #!/bin/sh
 #ruby gem scraper, grab all the gems to hAck
-#Larry Cashdollar, @_larry0 1/1/2013
+#Larry Cashdollar, @_larry0 2/17/2015
 
 echo "[+] Scraping rubygems.org for all $1 Gems";
 echo "[+] Cleaning up files";
-OUTPATH="/var/www/";
-USER=`whoami`
+
+WPATH=workdir
+OUTPATH=outdir
 
 rm -rf working.$1
 echo "[+] Getting number of pages for letter $1";
 
-wget http://rubygems.org/gems?letter=$1 -O $1.max
+wget https://rubygems.org/gems?letter=$1 -O $1.max
 
 NUM=`cat $1.max | grep Next | awk -F\= '{print $36}' | awk -F\" '{print $1}'`
 
@@ -19,16 +20,16 @@ echo "[+] Number of pages :"$NUM
 
 echo "[+] Downloading all $1 gems"
 
-for x in `seq 1 $NUM`; do wget  -nv http://rubygems.org/gems?letter=$1\&page=$x -O $1.$x.list ; done
+for x in `seq 1 $NUM`; do wget  -nv https://rubygems.org/gems?letter=$1\&page=$x -O $1.$x.list ; done
 
 echo "[+] Creating package list"
 
-cat $1.*.list  |grep "/gems/" | awk -F= '{print $2}' | sed -e 's/\/gems\///g' | sed -e 's/\"//g' | sed -e 's/>//' > main_pkg_list.$1
+cat $1.*.list  |grep "href=\"/gems/"  | awk -F= '{print $3}' | sed -e 's/\/gems\///g' | sed -e 's/\"//g' | sed -e 's/>//' > main_pkg_list.$1
 echo "[+] Downloading all packages pages for parsing"
 
 mkdir working.$1
 
-for x in `cat main_pkg_list.$1`; do wget -nv http://rubygems.org/gems/$x -O working.$1/$x ; done
+for x in `cat main_pkg_list.$1`; do wget -nv https://rubygems.org/gems/$x -O working.$1/$x ; done
 
 cd working.$1
 
@@ -36,14 +37,14 @@ LIST=`ls|wc -l`
 
 echo "[+] Creating download script for $LIST gems."
 echo "#!/bin/sh" > download.sh.tmp
-for x in `ls` ; do cat $x  |grep downloads/ |grep gem | awk -F= '{print $2}' | awk '{print $1}' | sed -e 's/"//g' ; done | awk '{print "wget -nv http://rubygems.org"$1}' >> download.sh.tmp
+
+for x in `ls`; do cat $x |grep Download | awk -F\" '{print "wget -nv https://rubygems.org"$4}'; done >> download.sh.tmp
 cat download.sh.tmp | sort -u > download.sh
 mkdir data.$1
 mv download.sh data.$1
 cd data.$1
 chmod 755 download.sh
 echo "[+] Downloading gems.."
-
 ./download.sh
 echo "[+] Renaming files from .gem to .tar"
 
@@ -60,7 +61,7 @@ for x in `ls|grep -v .tar`; do echo "- Unpacking $x"; tar -zxmf $x/data.tar.gz -
 
 echo "[+] Generating file lists of potential targets"
 
-cd /home/$USER/db/scrapedb/working.$1/data.$1
+cd $WPATH/working.$1/data.$1
 echo  "************************************************************"
 pwd
 echo  "************************************************************"
@@ -99,13 +100,13 @@ for x in `cat api_key.$1.log`; do echo "+--------------------[$x]---------------
 #cat backtick.$1.log.txt | txt2html > /var/www/$1-backtick.html
 #cat system.$1.log.txt | txt2html > /var/www/$1-system.html
 
-cp command.$1.log.txt  > $OUTPATH/$1-command.txt
-cp tmpfile.$1.log.txt  > $OUTPATH/$1-tmpfile.txt
-cp x_percent.$1.log.txt  > $OUTPATH/$1-xexec.txt
-cp api_key.$1.log.txt  > $OUTPATH/$1-apikey.txt
-cp backtick.$1.log.txt > $OUTPATH/$1-backtick.txt
-cp system.$1.log.txt  > $OUTPATH/$1-system.txt
+cp command.$1.log.txt   $OUTPATH/$1-command.txt
+cp tmpfile.$1.log.txt   $OUTPATH/$1-tmpfile.txt
+cp x_percent.$1.log.txt   $OUTPATH/$1-xexec.txt
+cp api_key.$1.log.txt   $OUTPATH/$1-apikey.txt
+cp backtick.$1.log.txt  $OUTPATH/$1-backtick.txt
+cp system.$1.log.txt   $OUTPATH/$1-system.txt
 
-cd /home/$USER/db/scrapedb
+cd $WPATH
 
 echo "[+] Done"
