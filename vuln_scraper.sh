@@ -5,8 +5,10 @@
 echo "[+] Scraping rubygems.org for all $1 Gems";
 echo "[+] Cleaning up files";
 
-WPATH=workdir
+WPATH=$(pwd)
 OUTPATH=outdir
+
+mkdir $OUTPATH
 
 rm -rf working.$1
 echo "[+] Getting number of pages for letter $1";
@@ -38,7 +40,7 @@ LIST=`ls|wc -l`
 echo "[+] Creating download script for $LIST gems."
 echo "#!/bin/sh" > download.sh.tmp
 
-for x in `ls`; do cat $x |grep Download | awk -F\" '{print "wget -nv https://rubygems.org"$4}'; done >> download.sh.tmp
+for x in `ls`; do cat $x |grep Download | awk -F "href=\"" '{print $2}' | awk -F "\">" '{print "wget -nv https://rubygems.org"$1}'; done >> download.sh.tmp
 cat download.sh.tmp | sort -u > download.sh
 mkdir data.$1
 mv download.sh data.$1
@@ -48,10 +50,12 @@ echo "[+] Downloading gems.."
 ./download.sh
 echo "[+] Renaming files from .gem to .tar"
 
-for x in `ls|grep gem`; do echo -n "mv $x "; echo "$x" | sed -e 's/.gem/.tar/'; done  > rename
+for x in `ls|grep gem`; do printf "mv $x "; echo "$x" | sed -e 's/.gem/.tar/'; done  > rename
 
 sh rename
 rm rename
+rm download.sh
+
 echo "[+] Unpacking"
 for x in `ls *.tar`; do echo $x | sed -e 's/.tar//'| xargs  mkdir ; done
 
@@ -66,11 +70,11 @@ echo  "************************************************************"
 pwd
 echo  "************************************************************"
 
-find . -name *.rb -exec grep -l "\`#{command}\`" {} \; > cmdfile.$1.log   
-find . -name *.rb -exec egrep -l "api_key|apikey" {} \; > api_key.$1.log   
+find . -name *.rb -exec grep -l "\`#{command}\`" {} \; > cmdfile.$1.log
+find . -name *.rb -exec egrep -l "api_key|apikey" {} \; > api_key.$1.log
 find . -name *.rb -exec egrep -l "\`*\`" {} \; > backtick.$1.log
 find . -name *.rb -exec egrep -l "system\(|system\s\(" {} \; > system.$1.log
-find . -name *.rb -exec egrep -l '%x[\{\(\[]' {} \; > x_percent.$1.log   
+find . -name *.rb -exec egrep -l '%x[\{\(\[]' {} \; > x_percent.$1.log
 find . -name *.rb -exec grep -l "/tmp" {} \; > tmpfile.$1.log
 
 echo "[+] Looking for (basic) command exec vulnerabilities."
@@ -100,12 +104,12 @@ for x in `cat api_key.$1.log`; do echo "+--------------------[$x]---------------
 #cat backtick.$1.log.txt | txt2html > /var/www/$1-backtick.html
 #cat system.$1.log.txt | txt2html > /var/www/$1-system.html
 
-cp command.$1.log.txt   $OUTPATH/$1-command.txt
-cp tmpfile.$1.log.txt   $OUTPATH/$1-tmpfile.txt
-cp x_percent.$1.log.txt   $OUTPATH/$1-xexec.txt
-cp api_key.$1.log.txt   $OUTPATH/$1-apikey.txt
-cp backtick.$1.log.txt  $OUTPATH/$1-backtick.txt
-cp system.$1.log.txt   $OUTPATH/$1-system.txt
+cp command.$1.log.txt   $WPATH/$OUTPATH/$1"-command.txt"
+cp tmpfile.$1.log.txt   $WPATH/$OUTPATH/$1"-tmpfile.txt"
+cp x_percent.$1.log.txt $WPATH/$OUTPATH/$1"-xexec.txt"
+cp api_key.$1.log.txt   $WPATH/$OUTPATH/$1"-apikey.txt"
+cp backtick.$1.log.txt  $WPATH/$OUTPATH/$1"-backtick.txt"
+cp system.$1.log.txt    $WPATH/$OUTPATH/$1"-system.txt"
 
 cd $WPATH
 
