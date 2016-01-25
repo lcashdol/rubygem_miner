@@ -1,6 +1,7 @@
 #!/bin/sh
 #ruby gem scraper, grab all the gems to hAck
 #Larry Cashdollar, @_larry0 2/17/2015
+#Fixes by @saschakorth 1/27/16 for OSX compatability
 
 echo "[+] Scraping rubygems.org for all $1 Gems";
 echo "[+] Cleaning up files";
